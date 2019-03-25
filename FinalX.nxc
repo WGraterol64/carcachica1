@@ -1,0 +1,198 @@
+
+sub turn_left()
+{
+  OnRev(OUT_A, 60);
+  OnFwd(OUT_B, 60);
+}
+sub turn_right()
+{
+  OnFwd(OUT_A, 60);
+  OnRev(OUT_B, 60);
+}
+
+sub foward()
+{
+  OnFwd(OUT_B, 65);
+  OnFwd(OUT_A, 65);
+}
+
+sub tomare()
+{
+  OnFwd(OUT_B, 0);
+  OnFwd(OUT_A, 0);
+}
+
+sub check(){
+
+}
+
+task main()
+{
+	SetSensorLowspeed(IN_4);
+  SetSensorLowspeed(IN_3);
+	SetSensorLight(IN_1);
+	SetSensorLight(IN_2);
+  int actualA = 0;
+  int actualB = 0;
+  int initialA= 0;
+  int initialB= 0;
+  int previoA= 0;
+  int previoB= 0;
+  int errorA = 0;
+  int errorB = 0;
+  int derivadaA = 0;
+  int derivadaB = 0;
+  int speed = 50;
+  int right = 0;
+  int left = 0;
+  int salidaA = 0;
+  int salidaB = 0;
+  int dt = 25;
+  int Kp = 15;
+  int Kd = 500;
+  initialA= Sensor(IN_1);
+  initialB= Sensor(IN_2);
+	int checkUS = 0;
+  int etapa = 0;
+  int Tvertical = 2050;
+  int Thorizontal = 4500;
+  int PHorizontal = 0;
+  int PVertical = 0;
+  int Sentido = 0;
+  int Contador = 0;
+  bool Vuelta = false;
+  int Ngrados = 630;
+  int negro = 30;
+  int dbloque = 30;
+  int giros = 0;
+
+
+
+  while(true){
+		TextOut(1,LCD_LINE1,"DS");
+		NumOut(50,LCD_LINE1,SensorUS(S4));
+    TextOut(1, LCD_LINE4, "Contador");
+    NumOut(50, LCD_LINE4, Contador);
+
+
+
+    actualA = Sensor(IN_1);
+    actualB = Sensor(IN_2);
+    errorA = initialA - actualA;
+    errorB = initialB - actualB;
+    derivadaA = errorA / dt;
+    derivadaB = errorB / dt;
+    salidaA = errorA * Kp + derivadaA * Kd;
+    salidaB = errorB * Kp + derivadaB * Kd;
+
+    NumOut(50,LCD_LINE2,actualA);
+    NumOut(50,LCD_LINE3,actualB);
+
+    right = speed + salidaA - salidaB;
+    left = speed + salidaB - salidaA;
+    if (left >   100) left  =  100;
+    if (left <  -100) left  = -100;
+    if (right >  100) right =  100;
+    if (right < -100) right = -100;
+    if (right < 0 && left < 0)
+    {
+     left = -left;
+     right = -right;
+    }
+
+
+    if(errorA - errorB > 10 ){ 
+      PlayTone(440,80);
+      turn_right();
+      Wait(75);
+
+    }
+    if(errorB - errorA > 10 ){ 
+      PlayTone(440,80);
+      turn_left();
+      Wait(75);
+
+    }
+
+
+
+
+
+    if(SensorUS(S4) >= dbloque){
+
+      OnFwd(OUT_A, right);
+      OnFwd(OUT_B, left); 
+     
+
+
+
+
+
+
+
+
+      /*while(errorA  > errorB && SensorUS(S4) >= 30)
+      {
+        OnFwd(OUT_A, errorA-errorB + 20);
+      }
+    }
+    else if(errorA  > errorB && SensorUS(S4) >= 30){
+      while(errorA > errorB && SensorUS(S4) >= 30)
+      {
+        OnFwd(OUT_B, errorA-errorB + 20);
+      }*/
+    }
+    else if (SensorUS(S4) < 15 ){
+      while (SensorUS(S4) < 15)
+      {
+        tomare();
+        Wait(100);
+        RotateMotorPID(OUT_A, 100, 550, 40, 40, 90);
+        Wait(200);
+        while (giros < 2)
+        {
+                 foward();
+                 Wait(450);
+                 tomare();
+                 Wait(100);
+                 RotateMotorPID(OUT_B, 100, 550, 40, 40, 90);
+                 Wait(200);
+                 if(SensorUS(S4) > 15){
+                        giros = giros + 1;
+
+                 }
+                 else{
+                      tomare();
+                      Wait(100);
+                      RotateMotorPID(OUT_A, 100, 550, 40, 40, 90);
+                      Wait(200);
+                 }
+       }
+       giros = 0;
+      }
+      foward();
+      Wait(300);
+      while(Sensor(IN_1) > 25 && Sensor(IN_2) > 25)
+       {
+         foward();
+       }
+      foward();
+      Wait(200);
+      tomare();
+      Wait(100);
+      while(Sensor(IN_1) > 25 && Sensor(IN_2) > 25)
+       {
+       turn_right();
+       }
+    turn_right();
+    Wait(500);
+    tomare();
+    Wait(100);
+  previoA = errorA;
+  previoB = errorB;
+  if (Vuelta == false) Contador = Contador + right - left;  
+  Wait(dt);
+  }
+  }
+}
+
